@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Workers{% endblock %}
+{% block content %}
+<h1>Workers</h1>
+<a href="{% url 'worker_register' %}">Register new worker</a>
+<table border="1">
+    <tr>
+        <th>Username</th>
+        <th>First Name</th>
+        <th>Last Name</th>
+        <th>Email</th>
+        <th>Active</th>
+        <th>Actions</th>
+    </tr>
+    {% for worker in workers %}
+    <tr>
+        <td>{{ worker.username }}</td>
+        <td>{{ worker.first_name|default:"-" }}</td>
+        <td>{{ worker.last_name|default:"-" }}</td>
+        <td>{{ worker.email|default:"-" }}</td>
+        <td>{{ worker.is_active|yesno:"Yes,No" }}</td>
+        <td><a href="{% url 'worker_update' worker.pk %}">Edit</a></td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="6">No workers yet.</td></tr>
+    {% endfor %}
+</table>
+{% endblock %}

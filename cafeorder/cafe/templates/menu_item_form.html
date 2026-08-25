@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<h1>{{ title }}</h1>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <h2>Order Items</h2>
+    {{ formset.management_form }}
+    {% for item_form in formset %}
+        <div>
+            {{ item_form.as_p }}
+        </div>
+    {% endfor %}
+
+    <button type="submit">Save Order</button>
+</form>
+<a href="{% url 'order_list' %}">Back to orders</a>
+{% endblock %}

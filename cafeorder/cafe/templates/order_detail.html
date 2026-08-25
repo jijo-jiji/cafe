@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Order #{{ order.id }}{% endblock %}
+{% block content %}
+<h1>Order #{{ order.id }}</h1>
+<p>Table: {{ order.table_number|default:"-" }}</p>
+<p>Customer: {{ order.customer_name|default:"-" }}</p>
+<p>Worker: {{ order.worker|default:"-" }}</p>
+<p>Status: {{ order.get_status_display }}</p>
+
+<h2>Update status</h2>
+<form method="post" action="{% url 'order_status_update' order.pk %}">
+    {% csrf_token %}
+    {{ status_form.as_p }}
+    <button type="submit">Update status</button>
+</form>
+
+<h2>Items</h2>
+<table border="1">
+    <tr>
+        <th>Item</th>
+        <th>Quantity</th>
+        <th>Note</th>
+        <th>Subtotal</th>
+        <th></th>
+    </tr>
+    {% for order_item in order.items.all %}
+    <tr>
+        <td>{{ order_item.menu_item.name }}</td>
+        <td>{{ order_item.quantity }}</td>
+        <td>{{ order_item.note|default:"-" }}</td>
+        <td>RM {{ order_item.subtotal }}</td>
+        <td>
+            <form method="post" action="{% url 'order_item_remove' order.pk order_item.pk %}">
+                {% csrf_token %}
+                <button type="submit">Remove</button>
+            </form>
+        </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5">No items added yet.</td></tr>
+    {% endfor %}
+</table>
+<p>Total: RM {{ order.total }}</p>
+
+<h2>Add item</h2>
+<form method="post" action="{% url 'order_item_add' order.pk %}">
+    {% csrf_token %}
+    {{ item_form.as_p }}
+    <button type="submit">Add item</button>
+</form>
+
+<a href="{% url 'order_list' %}">Back to orders</a>
+{% endblock %}
