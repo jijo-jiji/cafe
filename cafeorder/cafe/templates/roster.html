@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Roster</h2>
+{% if user.is_superuser or user.employeeprofile.role == "admin" or user.employeeprofile.role == "manager" %}
+    <a href="{% url 'shift_create' %}">Add Shift</a>
+{% endif %}
+<table border="1">
+    <tr><th>Employee</th><th>Date</th><th>Slot</th><th>Status</th></tr>
+    {% for shift in shifts %}
+    <tr>
+        <td>{{ shift.employee.username }}</td>
+        <td>{{ shift.date }}</td>
+        <td>{{ shift.slot }}</td>
+        <td>{{ shift.status }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="4">No shifts yet.</td></tr>
+    {% endfor %}
+</table>
+{% endblock %}

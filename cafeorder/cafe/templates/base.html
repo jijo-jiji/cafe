@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head><title>Cafe HRMS</title></head>
+<body>
+<h1>Cafe HRMS</h1>
+<nav>
+    <a href="{% url 'my_attendance' %}">My Attendance</a> |
+    <a href="{% url 'clock_in' %}">Clock In</a> |
+    <a href="{% url 'clock_out' %}">Clock Out</a> |
+    <a href="{% url 'roster' %}">Roster</a> |
+    <a href="{% url 'leave_request_create' %}">Apply Leave</a> |
+    <a href="{% url 'my_leave_requests' %}">My Leave</a> |
+    {% if user.is_superuser or user.employeeprofile.role == "admin" or user.employeeprofile.role == "manager" %}
+        <a href="{% url 'employee_list' %}">Employees</a> |
+        <a href="{% url 'shiftslot_list' %}">Shift Slots</a> |
+        <a href="{% url 'attendance_list' %}">All Attendance</a> |
+        <a href="{% url 'leave_approval_list' %}">Leave Approvals</a> |
+    {% endif %}
+    {% if user.is_authenticated %}
+        Logged in as {{ user.username }} |
+            <form method="post" action="{% url 'logout' %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit">Logout</button>
+            </form>
+    {% else %}
+        <a href="{% url 'login' %}">Login</a>
+    {% endif %}
+</nav>
+<hr>
+{% if messages %}
+    <ul>
+        {% for message in messages %}
+            <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+{% block content %}{% endblock %}
+</body>
+</html>

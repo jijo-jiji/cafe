@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Employees</h2>
+{% if user.is_superuser or user.employeeprofile.role == "admin" or user.employeeprofile.role == "manager" %}
+    <a href="{% url 'employee_register' %}">Add new employee</a>
+{% endif %}
+<table border="1">
+    <tr>
+        <th>Username</th>
+        <th>Name</th>
+        <th>Actions</th>
+    </tr>
+    {% for employee in employees %}
+    <tr>
+        <td>{{ employee.username }}</td>
+        <td>{{ employee.first_name }} {{ employee.last_name }}</td>
+        <td>
+            {% if user.is_superuser or user.employeeprofile.role == "admin" or user.employeeprofile.role == "manager" or employee.pk == user.pk %}
+                <a href="{% url 'employee_update' employee.pk %}">Edit</a>
+            {% endif %}
+        </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="3">No employees yet.</td></tr>
+    {% endfor %}
+</table>
+{% endblock %}

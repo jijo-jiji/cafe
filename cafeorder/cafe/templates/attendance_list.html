@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>All Attendance</h2>
+<table border="1">
+    <tr><th>Employee</th><th>Date</th><th>Clock In</th><th>Clock Out</th><th>Actions</th></tr>
+    {% for record in records %}
+    <tr>
+        <td>{{ record.employee.username }}</td>
+        <td>{{ record.date }}</td>
+        <td>{{ record.clock_in_time|default:"-" }}</td>
+        <td>{{ record.clock_out_time|default:"-" }}</td>
+        <td><a href="{% url 'attendance_update' record.pk %}">Edit</a></td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5">No records yet.</td></tr>
+    {% endfor %}
+</table>
+{% endblock %}
