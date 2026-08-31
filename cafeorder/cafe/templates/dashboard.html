@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Cafe HRMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-title-group">
+        <h1>Welcome, {{ user.first_name|default:user.username }} 👋</h1>
+        <p class="page-subtitle">Here is your daily cafe staffing &amp; activity overview for <strong id="live-date-display">{{ today|date:"l, d F Y" }}</strong>.</p>
+    </div>
+    <div class="page-actions">
+        <!-- Quick Clock In / Out Action Widget -->
+        <div class="quick-attendance-widget" style="padding: 6px 14px;">
+            <div style="margin-right: 8px;">
+                <span style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Status:</span>
+                {% if today_attendance and not today_attendance.clock_out_time %}
+                    <span class="badge badge-approved">🟢 Clocked In ({{ today_attendance.clock_in_time|time:"h:i A" }})</span>
+                {% elif today_attendance and today_attendance.clock_out_time %}
+                    <span class="badge badge-completed">⚪ Completed Today ({{ today_attendance.duration_formatted }})</span>
+                {% else %}
+                    <span class="badge badge-pending">🟡 Not Clocked In</span>
+                {% endif %}
+            </div>
+
+            <div class="clock-btn-group">
+                {% if not today_attendance %}
+                    <a href="{% url 'clock_in' %}" class="btn btn-success btn-sm">▶ Clock In</a>
+                {% elif not today_attendance.clock_out_time %}
+                    <a href="{% url 'clock_out' %}" class="btn btn-danger btn-sm">⏹ Clock Out</a>
+                {% else %}
+                    <span style="font-size: 12px; color: var(--text-muted); font-style: italic;">Shift Logged</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- KPI Metrics Grid -->
+<div class="metrics-grid">
+    {% if is_manager %}
+        <div class="metric-card accent-espresso">
+            <div class="metric-icon-box">👥</div>
+            <div class="metric-content">
+                <span class="metric-label">Total Staff</span>
+                <span class="metric-value">{{ total_employees }}</span>
+                <span class="metric-desc">Registered employees</span>
+            </div>
+        </div>
+        <div class="metric-card accent-amber">
+            <div class="metric-icon-box">📅</div>
+            <div class="metric-content">
+                <span class="metric-label">Shifts Today</span>
+                <span class="metric-value">{{ today_shifts.count }}</span>
+                <span class="metric-desc">Scheduled shifts</span>
+            </div>
+        </div>
+        <div class="metric-card accent-emerald">
+            <div class="metric-icon-box">⏱️</div>
+            <div class="metric-content">
+                <span class="metric-label">Clocked In Now</span>
+                <span class="metric-value">{{ active_clocked_in }}</span>
+                <span class="metric-desc">Staff currently on duty</span>
+            </div>
+        </div>
+        <div class="metric-card accent-rose">
+            <div class="metric-icon-box">✍️</div>
+            <div class="metric-content">
+                <span class="metric-label">Pending Leaves</span>
+                <span class="metric-value">{{ pending_leaves_count }}</span>
+                <span class="metric-desc">Awaiting your approval</span>
+            </div>
+        </div>
+    {% else %}
+        <div class="metric-card accent-espresso">
+            <div class="metric-icon-box">⏳</div>
+            <div class="metric-content">
+                <span class="metric-label">Total Hours Worked</span>
+                <span class="metric-value">{{ user_total_hours }}h</span>
+                <span class="metric-desc">All verified shift logs</span>
+            </div>
+        </div>
+        <div class="metric-card accent-emerald">
+            <div class="metric-icon-box">💰</div>
+            <div class="metric-content">
+                <span class="metric-label">Estimated Pay</span>
+                <span class="metric-value">RM {{ user_total_earnings }}</span>
+                <span class="metric-desc">Rate: RM {{ user.employeeprofile.hourly_rate }}/hr</span>
+            </div>
+        </div>
+        <div class="metric-card accent-amber">
+            <div class="metric-icon-box">🌴</div>
+            <div class="metric-content">
+                <span class="metric-label">Leave Balance</span>
+                <span class="metric-value">{{ leave_balance }} Days</span>
+                <span class="metric-desc">Annual leave remaining</span>
+            </div>
+        </div>
+        <div class="metric-card accent-rose">
+            <div class="metric-icon-box">📅</div>
+            <div class="metric-content">
+                <span class="metric-label">Upcoming Shifts</span>
+                <span class="metric-value">{{ my_shifts.count }}</span>
+                <span class="metric-desc">Scheduled this week</span>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Content Grid (Tables & Summaries) -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 24px;">
+    
+    <!-- Shifts Section -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">
+                📅 {% if is_manager %}Today's Scheduled Shifts{% else %}My Upcoming Shifts{% endif %}
+            </h2>
+            <a href="{% url 'roster' %}" class="btn btn-secondary btn-sm">View Full Roster</a>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        {% if is_manager %}<th>Staff</th>{% endif %}
+                        <th>Date</th>
+                        <th>Shift Slot</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if is_manager %}
+                        {% for shift in today_shifts %}
+                        <tr>
+                            <td><strong>{{ shift.employee.username }}</strong></td>
+                            <td>{{ shift.date|date:"M d, Y" }}</td>
+                            <td><span class="badge badge-warning">{{ shift.slot.name }} ({{ shift.slot.start_time|time:"H:i" }} - {{ shift.slot.end_time|time:"H:i" }})</span></td>
+                            <td>
+                                {% if shift.status == "completed" %}
+                                    <span class="badge badge-completed">Completed</span>
+                                {% elif shift.status == "cancelled" %}
+                                    <span class="badge badge-cancelled">Cancelled</span>
+                                {% else %}
+                                    <span class="badge badge-scheduled">Scheduled</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr class="no-filter"><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 24px;">No shifts scheduled for today.</td></tr>
+                        {% endfor %}
+                    {% else %}
+                        {% for shift in my_shifts %}
+                        <tr>
+                            <td>{{ shift.date|date:"M d, Y" }}</td>
+                            <td><span class="badge badge-warning">{{ shift.slot.name }} ({{ shift.slot.start_time|time:"H:i" }} - {{ shift.slot.end_time|time:"H:i" }})</span></td>
+                            <td>
+                                {% if shift.status == "completed" %}
+                                    <span class="badge badge-completed">Completed</span>
+                                {% elif shift.status == "cancelled" %}
+                                    <span class="badge badge-cancelled">Cancelled</span>
+                                {% else %}
+                                    <span class="badge badge-scheduled">Scheduled</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr class="no-filter"><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 24px;">No upcoming shifts assigned.</td></tr>
+                        {% endfor %}
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Leave Section -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">
+                🌴 {% if is_manager %}Pending Leave Approvals{% else %}My Recent Leave Requests{% endif %}
+            </h2>
+            {% if is_manager %}
+                <a href="{% url 'leave_approval_list' %}" class="btn btn-secondary btn-sm">All Approvals</a>
+            {% else %}
+                <a href="{% url 'leave_request_create' %}" class="btn btn-primary btn-sm">+ Apply Leave</a>
+            {% endif %}
+        </div>
+
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        {% if is_manager %}<th>Employee</th>{% endif %}
+                        <th>Leave Type</th>
+                        <th>Duration</th>
+                        <th>Status</th>
+                        {% if is_manager %}<th>Action</th>{% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if is_manager %}
+                        {% for req in pending_leaves %}
+                        <tr>
+                            <td><strong>{{ req.employee.username }}</strong></td>
+                            <td>{{ req.get_leave_type_display }}</td>
+                            <td>{{ req.start_date|date:"d M" }} &rarr; {{ req.end_date|date:"d M" }} ({{ req.total_days }}d)</td>
+                            <td><span class="badge badge-pending">Pending</span></td>
+                            <td>
+                                <form method="post" action="{% url 'leave_approve' req.pk %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr class="no-filter"><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">No pending leave applications.</td></tr>
+                        {% endfor %}
+                    {% else %}
+                        {% for req in my_leaves %}
+                        <tr>
+                            <td>{{ req.get_leave_type_display }}</td>
+                            <td>{{ req.start_date|date:"d M" }} &rarr; {{ req.end_date|date:"d M" }} ({{ req.total_days }}d)</td>
+                            <td>
+                                {% if req.status == "approved" %}
+                                    <span class="badge badge-approved">Approved</span>
+                                {% elif req.status == "rejected" %}
+                                    <span class="badge badge-rejected">Rejected</span>
+                                {% else %}
+                                    <span class="badge badge-pending">Pending</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr class="no-filter"><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 24px;">No recent leave requests.</td></tr>
+                        {% endfor %}
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

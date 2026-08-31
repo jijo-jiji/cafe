@@ -1,13 +1,48 @@
+{% load static %}
 <!DOCTYPE html>
-<html>
-<head><title>Login</title></head>
-<body>
-<h1>Cafe HRMS Login</h1>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <input type="hidden" name="next" value="{{ next }}">
-    <button type="submit">Login</button>
-</form>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Cafe HRMS Portal</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body class="login-page-bg">
+    <div class="login-card">
+        <div class="login-brand">
+            <img src="{% static 'images/logo.svg' %}" alt="Cafe HRMS Logo" class="login-brand-logo">
+            <p class="login-brand-subtitle">Staff Portal &amp; Management Login</p>
+        </div>
+
+        {% if form.errors %}
+            <div class="alert alert-danger" style="margin-bottom: 20px;">
+                <span>Invalid username or password. Please try again.</span>
+            </div>
+        {% endif %}
+
+        <form method="post" action="{% url 'login' %}">
+            {% csrf_token %}
+            <div class="form-group" style="text-align: left;">
+                <label class="form-label" for="id_username">Username</label>
+                <input type="text" name="username" autofocus autocapitalize="none" autocomplete="username" maxlength="150" required id="id_username" class="form-control" placeholder="Enter username">
+            </div>
+
+            <div class="form-group" style="text-align: left; margin-bottom: 24px;">
+                <label class="form-label" for="id_password">Password</label>
+                <input type="password" name="password" autocomplete="current-password" required id="id_password" class="form-control" placeholder="Enter password">
+            </div>
+
+            <input type="hidden" name="next" value="{{ next }}">
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 15px;">Sign In to Portal</button>
+        </form>
+
+        <div class="login-credentials-hint">
+            <strong>System Roles:</strong>
+            <ul style="margin-left: 18px; margin-top: 4px;">
+                <li><strong>Admin / Manager:</strong> Full access to roster, leave approvals, employee rates &amp; payroll.</li>
+                <li><strong>Staff / Barista:</strong> Access to personal attendance, shifts, leave applications &amp; wage history.</li>
+            </ul>
+        </div>
+    </div>
 </body>
 </html>

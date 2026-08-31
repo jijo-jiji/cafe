@@ -13,7 +13,7 @@ SECRET_KEY = 'django-insecure-&+-&=$9^a_@aft7@k0-k&u+mt2=xcxxi3a7l7p(g62*3a-bd&^
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -105,6 +105,6 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 
 # Auth redirects
-LOGIN_REDIRECT_URL = 'my_attendance'
+LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'login'
 LOGIN_URL = 'login'

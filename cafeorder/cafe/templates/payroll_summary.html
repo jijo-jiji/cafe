@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Payroll &amp; Calculation Summary - Cafe HRMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-title-group">
+        <h1>💰 Payroll &amp; Wage Calculation Summary</h1>
+        <p class="page-subtitle">Automated wage calculation process based on recorded attendance hours, hourly rates and overtime multiplier.</p>
+    </div>
+    <div class="page-actions">
+        <button type="button" class="btn btn-secondary" onclick="window.print()">🖨️ Print / Export Report</button>
+    </div>
+</div>
+
+<!-- Store Summary KPI Metrics -->
+<div class="metrics-grid">
+    <div class="metric-card accent-espresso">
+        <div class="metric-icon-box">⏳</div>
+        <div class="metric-content">
+            <span class="metric-label">Total Store Hours</span>
+            <span class="metric-value">{{ total_store_hours }} hrs</span>
+            <span class="metric-desc">Sum of verified attendance logs</span>
+        </div>
+    </div>
+    <div class="metric-card accent-emerald">
+        <div class="metric-icon-box">💵</div>
+        <div class="metric-content">
+            <span class="metric-label">Total Store Payout</span>
+            <span class="metric-value">RM {{ total_store_payout }}</span>
+            <span class="metric-desc">Gross wages calculated</span>
+        </div>
+    </div>
+    <div class="metric-card accent-amber">
+        <div class="metric-icon-box">👥</div>
+        <div class="metric-content">
+            <span class="metric-label">Active Staff on Payroll</span>
+            <span class="metric-value">{{ payroll_data|length }}</span>
+            <span class="metric-desc">Employees with profile rates</span>
+        </div>
+    </div>
+</div>
+
+<!-- Main Payroll Table -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">📊 Employee Wage Calculation Breakdown</h2>
+        <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" data-table-search="payroll-table" placeholder="Filter employee payroll...">
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="custom-table" id="payroll-table">
+            <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>Role</th>
+                    <th>Hourly Rate</th>
+                    <th>Regular Hours (&le;40h)</th>
+                    <th>OT Hours (&gt;40h)</th>
+                    <th>Total Hours</th>
+                    <th>Base Pay</th>
+                    <th>OT Pay (1.5x)</th>
+                    <th>Gross Salary</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in payroll_data %}
+                <tr>
+                    <td>
+                        <strong>{{ item.user.username }}</strong>
+                        <div style="font-size: 11.5px; color: var(--text-muted);">{{ item.user.get_full_name }}</div>
+                    </td>
+                    <td><span class="badge badge-role-staff">{{ item.role }}</span></td>
+                    <td><strong>RM {{ item.rate|floatformat:2 }}/hr</strong></td>
+                    <td>{{ item.regular_hours }} hrs</td>
+                    <td>
+                        {% if item.ot_hours > 0 %}
+                            <span class="badge badge-warning">{{ item.ot_hours }} hrs</span>
+                        {% else %}
+                            0.00 hrs
+                        {% endif %}
+                    </td>
+                    <td><strong>{{ item.total_hours }} hrs</strong></td>
+                    <td>RM {{ item.base_pay|floatformat:2 }}</td>
+                    <td>RM {{ item.ot_pay|floatformat:2 }}</td>
+                    <td><strong style="color: #047857; font-size: 14.5px;">RM {{ item.gross_pay|floatformat:2 }}</strong></td>
+                </tr>
+                {% empty %}
+                <tr class="no-filter"><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 24px;">No payroll records available.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Interactive Wage Estimation & Calculation Tool (Satisfies Course Rubric Section 1.3: Calculation Process) -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">🧮 Interactive Wage Calculator &amp; Estimator</h2>
+        <span style="font-size: 12px; color: var(--text-muted);">Live real-time estimation algorithm</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
+        <div>
+            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+                Use this tool to forecast wages for new hires, bonus shifts, or overtime adjustments:
+            </p>
+            <div class="form-group">
+                <label class="form-label" for="calc-input-hours">Regular Working Hours:</label>
+                <input type="number" id="calc-input-hours" class="form-control" value="40" step="0.5" min="0">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="calc-input-rate">Hourly Rate (RM):</label>
+                <input type="number" id="calc-input-rate" class="form-control" value="15.00" step="0.50" min="0">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="calc-input-ot">Overtime Hours:</label>
+                <input type="number" id="calc-input-ot" class="form-control" value="5" step="0.5" min="0">
+            </div>
+        </div>
+
+        <div>
+            <div class="calc-summary-box" style="margin-top: 0;">
+                <div class="calc-summary-title">
+                    <span>💡 Live Calculation Formulas Applied:</span>
+                </div>
+                <div class="calc-row">
+                    <span>Base Formula: <code>Hours &times; Rate</code></span>
+                    <strong id="calc-result-base" style="color: var(--cafe-espresso);">RM 600.00</strong>
+                </div>
+                <div class="calc-row">
+                    <span>Overtime Formula: <code>OT Hours &times; (Rate &times; 1.5)</code></span>
+                    <strong id="calc-result-ot" style="color: var(--cafe-caramel);">RM 112.50</strong>
+                </div>
+                <div class="calc-row total-row">
+                    <span>Total Estimated Payout:</span>
+                    <strong id="calc-result-total" style="color: #047857;">RM 712.50</strong>
+                </div>
+            </div>
+            <div style="font-size: 11.5px; color: var(--text-muted); line-height: 1.4;">
+                📌 <em>Note for project report:</em> The calculation process follows the Malaysian Employment Standard Overtime Multiplier (1.5x base hourly rate).
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

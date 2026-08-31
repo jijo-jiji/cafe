@@ -1,27 +1,84 @@
 {% extends "base.html" %}
+{% block title %}Employees - Cafe HRMS{% endblock %}
+
 {% block content %}
-<h2>Employees</h2>
-{% if user.is_superuser or user.employeeprofile.role == "admin" or user.employeeprofile.role == "manager" %}
-    <a href="{% url 'employee_register' %}">Add new employee</a>
-{% endif %}
-<table border="1">
-    <tr>
-        <th>Username</th>
-        <th>Name</th>
-        <th>Actions</th>
-    </tr>
-    {% for employee in employees %}
-    <tr>
-        <td>{{ employee.username }}</td>
-        <td>{{ employee.first_name }} {{ employee.last_name }}</td>
-        <td>
-            {% if user.is_superuser or user.employeeprofile.role == "admin" or user.employeeprofile.role == "manager" or employee.pk == user.pk %}
-                <a href="{% url 'employee_update' employee.pk %}">Edit</a>
-            {% endif %}
-        </td>
-    </tr>
-    {% empty %}
-    <tr><td colspan="3">No employees yet.</td></tr>
-    {% endfor %}
-</table>
+<div class="page-header">
+    <div class="page-title-group">
+        <h1>👥 Employee Management</h1>
+        <p class="page-subtitle">Manage store staff, assign roles, define hourly pay rates and emergency contacts.</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'employee_register' %}" class="btn btn-primary">+ Register New Employee</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-filter-bar">
+        <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" data-table-search="employee-table" placeholder="Search by name, role or username...">
+        </div>
+        <div style="font-size: 13px; color: var(--text-muted);">
+            Total Staff: <strong>{{ employees.count }}</strong>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="custom-table" id="employee-table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Full Name</th>
+                    <th>Role</th>
+                    <th>Employment</th>
+                    <th>Hourly Rate</th>
+                    <th>Leave Balance</th>
+                    <th>Contact</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for emp in employees %}
+                <tr>
+                    <td><strong>{{ emp.username }}</strong></td>
+                    <td>{{ emp.get_full_name|default:"-" }}</td>
+                    <td>
+                        {% if emp.is_superuser or emp.employeeprofile.role == "admin" %}
+                            <span class="badge badge-role-admin">👑 Admin/Owner</span>
+                        {% elif emp.employeeprofile.role == "manager" %}
+                            <span class="badge badge-role-manager">💼 Manager</span>
+                        {% else %}
+                            <span class="badge badge-role-staff">☕ Staff</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ emp.employeeprofile.get_employment_type_display|default:"Part-time" }}</td>
+                    <td><strong>RM {{ emp.employeeprofile.hourly_rate|default:"0.00" }}/hr</strong></td>
+                    <td><span class="badge badge-warning">{{ emp.employeeprofile.leave_balance|default:"14" }} Days</span></td>
+                    <td>
+                        {% if emp.employeeprofile.phone %}
+                            📞 {{ emp.employeeprofile.phone }}
+                        {% else %}
+                            <span style="color: var(--text-muted);">-</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: right; white-space: nowrap;">
+                        <a href="{% url 'employee_update' emp.pk %}" class="btn btn-secondary btn-sm">Edit</a>
+                        {% if emp.pk != user.pk %}
+                            <button type="button" 
+                                    class="btn btn-danger btn-sm"
+                                    data-confirm-action="{% url 'employee_delete' emp.pk %}"
+                                    data-confirm-title="Delete Employee Account"
+                                    data-confirm-text="Are you sure you want to remove {{ emp.username }} from the system? All associated records will be deleted.">
+                                Delete
+                            </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr class="no-filter"><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">No employees registered yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}

@@ -1,13 +1,52 @@
 {% extends "base.html" %}
+{% block title %}Shift Slots - Cafe HRMS{% endblock %}
+
 {% block content %}
-<h2>Shift Slots</h2>
-<a href="{% url 'shiftslot_create' %}">Add Slot</a>
-<table border="1">
-    <tr><th>Name</th><th>Start</th><th>End</th></tr>
-    {% for slot in slots %}
-    <tr><td>{{ slot.name }}</td><td>{{ slot.start_time }}</td><td>{{ slot.end_time }}</td></tr>
-    {% empty %}
-    <tr><td colspan="3">No shift slots yet.</td></tr>
-    {% endfor %}
-</table>
+<div class="page-header">
+    <div class="page-title-group">
+        <h1>⏳ Shift Slots &amp; Schedules</h1>
+        <p class="page-subtitle">Define recurring cafe shift periods (e.g. Opening, Mid-day, Peak Hours, Closing).</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'shiftslot_create' %}" class="btn btn-primary">+ Add New Shift Slot</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>Slot Name</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Duration Window</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for slot in slots %}
+                <tr>
+                    <td><strong>{{ slot.name }}</strong></td>
+                    <td>{{ slot.start_time|time:"h:i A" }}</td>
+                    <td>{{ slot.end_time|time:"h:i A" }}</td>
+                    <td><span class="badge badge-warning">{{ slot.duration_formatted }}</span></td>
+                    <td style="text-align: right; white-space: nowrap;">
+                        <a href="{% url 'shiftslot_update' slot.pk %}" class="btn btn-secondary btn-sm">Edit</a>
+                        <button type="button" 
+                                class="btn btn-danger btn-sm"
+                                data-confirm-action="{% url 'shiftslot_delete' slot.pk %}"
+                                data-confirm-title="Delete Shift Slot"
+                                data-confirm-text="Are you sure you want to delete the '{{ slot.name }}' slot?">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr class="no-filter"><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">No shift slots created yet. Click '+ Add New Shift Slot' to configure timings.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}

@@ -1,17 +1,73 @@
 {% extends "base.html" %}
+{% block title %}My Attendance - Cafe HRMS{% endblock %}
+
 {% block content %}
-<h2>My Attendance</h2>
-<table border="1">
-    <tr><th>Date</th><th>Clock In</th><th>Clock Out</th><th>Notes</th></tr>
-    {% for record in records %}
-    <tr>
-        <td>{{ record.date }}</td>
-        <td>{{ record.clock_in_time|default:"-" }}</td>
-        <td>{{ record.clock_out_time|default:"-" }}</td>
-        <td>{{ record.notes|default:"-" }}</td>
-    </tr>
-    {% empty %}
-    <tr><td colspan="4">No records yet.</td></tr>
-    {% endfor %}
-</table>
+<div class="page-header">
+    <div class="page-title-group">
+        <h1>⏱️ My Attendance Logs</h1>
+        <p class="page-subtitle">Track your clock-in timestamps, working durations and duty notes.</p>
+    </div>
+    <div class="page-actions">
+        <div class="quick-attendance-widget">
+            <span style="font-size: 13px;">Total Logged Hours:</span>
+            <strong style="color: var(--cafe-espresso); font-size: 15px;">{{ total_hours }} hrs</strong>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-filter-bar">
+        <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" data-table-search="my-attendance-table" placeholder="Filter by date or notes...">
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="custom-table" id="my-attendance-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Clock In</th>
+                    <th>Clock Out</th>
+                    <th>Calculated Duration</th>
+                    <th>Duty Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td><strong>{{ record.date|date:"D, M d, Y" }}</strong></td>
+                    <td>
+                        {% if record.clock_in_time %}
+                            <span style="color: #047857; font-weight: 600;">{{ record.clock_in_time|time:"h:i A" }}</span>
+                        {% else %}
+                            <span style="color: var(--text-muted);">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if record.clock_out_time %}
+                            <span style="color: #be123c; font-weight: 600;">{{ record.clock_out_time|time:"h:i A" }}</span>
+                        {% else %}
+                            <span class="badge badge-pending">Active (On Duty)</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if record.clock_out_time %}
+                            <span class="badge badge-completed">{{ record.duration_formatted }} ({{ record.hours_worked }} hrs)</span>
+                        {% elif record.clock_in_time %}
+                            <span class="badge badge-pending">In Progress</span>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>{{ record.notes|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr class="no-filter"><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">No attendance records found. Use the 'Clock In' button when starting your shift!</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}

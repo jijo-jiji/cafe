@@ -1,9 +1,46 @@
 {% extends "base.html" %}
+{% block title %}Apply for Leave - Cafe HRMS{% endblock %}
+
 {% block content %}
-<h2>Apply for Leave</h2>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Submit</button>
-</form>
+<div class="page-header">
+    <div class="page-title-group">
+        <h1>🌴 Apply for Leave</h1>
+        <p class="page-subtitle">Submit a leave application for manager review. Your dates will be calculated automatically.</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'my_leave_requests' %}" class="btn btn-secondary">&larr; Back to My Leave Requests</a>
+    </div>
+</div>
+
+<div class="form-card">
+    <div class="quick-attendance-widget" style="margin-bottom: 20px; width: 100%; justify-content: space-between;">
+        <span>Current Available Leave Balance:</span>
+        <strong style="color: var(--cafe-caramel); font-size: 15px;">{{ current_balance }} Days</strong>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        <!-- Dynamic Live Calculation Preview Box -->
+        <div id="leave-calculation-preview" class="calc-summary-box" data-current-balance="{{ current_balance }}" style="display: none;">
+            <div class="calc-summary-title">
+                <span>🧮 Live Calculation Preview</span>
+            </div>
+            <div class="calc-row">
+                <span>Total Leave Days Requested:</span>
+                <strong id="calc-total-days" style="color: var(--cafe-espresso);">-</strong>
+            </div>
+            <div class="calc-row">
+                <span>Leave Balance Remaining After Approval:</span>
+                <strong id="calc-remaining-balance" style="color: var(--cafe-caramel);">-</strong>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <a href="{% url 'my_leave_requests' %}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Submit Leave Request</button>
+        </div>
+    </form>
+</div>
 {% endblock %}

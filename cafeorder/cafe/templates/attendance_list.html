@@ -1,18 +1,86 @@
 {% extends "base.html" %}
+{% block title %}All Attendance Records - Cafe HRMS{% endblock %}
+
 {% block content %}
-<h2>All Attendance</h2>
-<table border="1">
-    <tr><th>Employee</th><th>Date</th><th>Clock In</th><th>Clock Out</th><th>Actions</th></tr>
-    {% for record in records %}
-    <tr>
-        <td>{{ record.employee.username }}</td>
-        <td>{{ record.date }}</td>
-        <td>{{ record.clock_in_time|default:"-" }}</td>
-        <td>{{ record.clock_out_time|default:"-" }}</td>
-        <td><a href="{% url 'attendance_update' record.pk %}">Edit</a></td>
-    </tr>
-    {% empty %}
-    <tr><td colspan="5">No records yet.</td></tr>
-    {% endfor %}
-</table>
+<div class="page-header">
+    <div class="page-title-group">
+        <h1>📋 All Staff Attendance Records</h1>
+        <p class="page-subtitle">Review, adjust and verify staff clock-in/out timestamps and total worked hours.</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'payroll_summary' %}" class="btn btn-primary">💰 View Payroll Calculation</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-filter-bar">
+        <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" data-table-search="all-attendance-table" placeholder="Search by staff name, date or notes...">
+        </div>
+        <div style="font-size: 13px; color: var(--text-muted);">
+            Total Records: <strong>{{ records.count }}</strong>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="custom-table" id="all-attendance-table">
+            <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>Date</th>
+                    <th>Clock In</th>
+                    <th>Clock Out</th>
+                    <th>Calculated Duration</th>
+                    <th>Notes</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td><strong>{{ record.employee.username }}</strong></td>
+                    <td>{{ record.date|date:"D, M d, Y" }}</td>
+                    <td>
+                        {% if record.clock_in_time %}
+                            <span style="color: #047857; font-weight: 600;">{{ record.clock_in_time|time:"h:i A" }}</span>
+                        {% else %}
+                            <span style="color: var(--text-muted);">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if record.clock_out_time %}
+                            <span style="color: #be123c; font-weight: 600;">{{ record.clock_out_time|time:"h:i A" }}</span>
+                        {% else %}
+                            <span class="badge badge-pending">Active (On Duty)</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if record.clock_out_time %}
+                            <span class="badge badge-completed">{{ record.duration_formatted }} ({{ record.hours_worked }} hrs)</span>
+                        {% elif record.clock_in_time %}
+                            <span class="badge badge-pending">In Progress</span>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>{{ record.notes|default:"-" }}</td>
+                    <td style="text-align: right; white-space: nowrap;">
+                        <a href="{% url 'attendance_update' record.pk %}" class="btn btn-secondary btn-sm">Edit</a>
+                        <button type="button" 
+                                class="btn btn-danger btn-sm"
+                                data-confirm-action="{% url 'attendance_delete' record.pk %}"
+                                data-confirm-title="Delete Attendance Record"
+                                data-confirm-text="Are you sure you want to remove this attendance log for {{ record.employee.username }} on {{ record.date }}?">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr class="no-filter"><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">No attendance records found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}

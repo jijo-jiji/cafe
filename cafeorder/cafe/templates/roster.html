@@ -1,20 +1,78 @@
 {% extends "base.html" %}
+{% block title %}Shift Roster - Cafe HRMS{% endblock %}
+
 {% block content %}
-<h2>Roster</h2>
-{% if user.is_superuser or user.employeeprofile.role == "admin" or user.employeeprofile.role == "manager" %}
-    <a href="{% url 'shift_create' %}">Add Shift</a>
-{% endif %}
-<table border="1">
-    <tr><th>Employee</th><th>Date</th><th>Slot</th><th>Status</th></tr>
-    {% for shift in shifts %}
-    <tr>
-        <td>{{ shift.employee.username }}</td>
-        <td>{{ shift.date }}</td>
-        <td>{{ shift.slot }}</td>
-        <td>{{ shift.status }}</td>
-    </tr>
-    {% empty %}
-    <tr><td colspan="4">No shifts yet.</td></tr>
-    {% endfor %}
-</table>
+<div class="page-header">
+    <div class="page-title-group">
+        <h1>📅 Store Shift Roster</h1>
+        <p class="page-subtitle">Schedule and view employee duty shifts across daily operations.</p>
+    </div>
+    <div class="page-actions">
+        {% if user.is_superuser or user.employeeprofile.role == "admin" or user.employeeprofile.role == "manager" %}
+            <a href="{% url 'shift_create' %}" class="btn btn-primary">+ Assign New Shift</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-filter-bar">
+        <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" data-table-search="roster-table" placeholder="Filter roster by barista, slot or date...">
+        </div>
+        <div style="font-size: 13px; color: var(--text-muted);">
+            Total Shifts: <strong>{{ shifts.count }}</strong>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="custom-table" id="roster-table">
+            <thead>
+                <tr>
+                    <th>Employee / Barista</th>
+                    <th>Date</th>
+                    <th>Shift Slot</th>
+                    <th>Working Hours</th>
+                    <th>Status</th>
+                    {% if user.is_superuser or user.employeeprofile.role == "admin" or user.employeeprofile.role == "manager" %}
+                        <th style="text-align: right;">Actions</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for shift in shifts %}
+                <tr>
+                    <td><strong>{{ shift.employee.username }}</strong></td>
+                    <td>{{ shift.date|date:"D, M d, Y" }}</td>
+                    <td>{{ shift.slot.name }}</td>
+                    <td><span class="badge badge-warning">{{ shift.slot.start_time|time:"h:i A" }} &rarr; {{ shift.slot.end_time|time:"h:i A" }}</span></td>
+                    <td>
+                        {% if shift.status == "completed" %}
+                            <span class="badge badge-completed">Completed</span>
+                        {% elif shift.status == "cancelled" %}
+                            <span class="badge badge-cancelled">Cancelled</span>
+                        {% else %}
+                            <span class="badge badge-scheduled">Scheduled</span>
+                        {% endif %}
+                    </td>
+                    {% if user.is_superuser or user.employeeprofile.role == "admin" or user.employeeprofile.role == "manager" %}
+                    <td style="text-align: right; white-space: nowrap;">
+                        <a href="{% url 'shift_update' shift.pk %}" class="btn btn-secondary btn-sm">Edit</a>
+                        <button type="button" 
+                                class="btn btn-danger btn-sm"
+                                data-confirm-action="{% url 'shift_delete' shift.pk %}"
+                                data-confirm-title="Cancel Scheduled Shift"
+                                data-confirm-text="Are you sure you want to cancel and remove this shift for {{ shift.employee.username }} on {{ shift.date }}?">
+                            Delete
+                        </button>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% empty %}
+                <tr class="no-filter"><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">No shifts scheduled in the roster.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}

@@ -1,28 +1,68 @@
 {% extends "base.html" %}
+{% block title %}Leave Approvals - Cafe HRMS{% endblock %}
+
 {% block content %}
-<h2>Pending Leave Requests</h2>
-<table border="1">
-    <tr><th>Employee</th><th>Type</th><th>Start</th><th>End</th><th>Reason</th><th>Actions</th></tr>
-    {% for leave in requests %}
-    <tr>
-        <td>{{ leave.employee.username }}</td>
-        <td>{{ leave.leave_type }}</td>
-        <td>{{ leave.start_date }}</td>
-        <td>{{ leave.end_date }}</td>
-        <td>{{ leave.reason|default:"-" }}</td>
-        <td>
-            <form method="post" action="{% url 'leave_approve' leave.pk %}" style="display:inline;">
-                {% csrf_token %}
-                <button type="submit">Approve</button>
-            </form>
-            <form method="post" action="{% url 'leave_reject' leave.pk %}" style="display:inline;">
-                {% csrf_token %}
-                <button type="submit">Reject</button>
-            </form>
-        </td>
-    </tr>
-    {% empty %}
-    <tr><td colspan="6">No pending leave requests.</td></tr>
-    {% endfor %}
-</table>
+<div class="page-header">
+    <div class="page-title-group">
+        <h1>✍️ Pending Leave Approvals</h1>
+        <p class="page-subtitle">Review employee leave applications. Approving will automatically calculate and deduct days from their balance.</p>
+    </div>
+    <div class="page-actions">
+        <div style="font-size: 13px; color: var(--text-secondary);">
+            Pending Queue: <strong>{{ requests.count }} Request{{ requests.count|pluralize }}</strong>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-filter-bar">
+        <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" data-table-search="leave-approval-table" placeholder="Filter by employee name, type or reason...">
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="custom-table" id="leave-approval-table">
+            <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>Current Balance</th>
+                    <th>Leave Type</th>
+                    <th>Period</th>
+                    <th>Requested Days</th>
+                    <th>Reason</th>
+                    <th style="text-align: right;">Decision Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in requests %}
+                <tr>
+                    <td>
+                        <strong>{{ req.employee.username }}</strong>
+                        <div style="font-size: 11.5px; color: var(--text-muted);">{{ req.employee.get_full_name }}</div>
+                    </td>
+                    <td><span class="badge badge-warning">{{ req.employee.employeeprofile.leave_balance|default:"14" }} Days</span></td>
+                    <td><strong>{{ req.get_leave_type_display }}</strong></td>
+                    <td>{{ req.start_date|date:"M d, Y" }} &rarr; {{ req.end_date|date:"M d, Y" }}</td>
+                    <td><span class="badge badge-role-manager">{{ req.total_days }} Day(s)</span></td>
+                    <td>{{ req.reason|default:"-" }}</td>
+                    <td style="text-align: right; white-space: nowrap;">
+                        <form method="post" action="{% url 'leave_approve' req.pk %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success btn-sm">✓ Approve</button>
+                        </form>
+                        <form method="post" action="{% url 'leave_reject' req.pk %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm">✕ Reject</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr class="no-filter"><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">No pending leave applications in the queue! 🎉</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}

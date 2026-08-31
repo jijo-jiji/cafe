@@ -1,39 +1,117 @@
+{% load static %}
 <!DOCTYPE html>
-<html>
-<head><title>Cafe HRMS</title></head>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Cafe HRMS - Staff &amp; Roster Management{% endblock %}</title>
+    <!-- Google Fonts & Custom Cafe Design System -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
 <body>
-<h1>Cafe HRMS</h1>
-<nav>
-    <a href="{% url 'my_attendance' %}">My Attendance</a> |
-    <a href="{% url 'clock_in' %}">Clock In</a> |
-    <a href="{% url 'clock_out' %}">Clock Out</a> |
-    <a href="{% url 'roster' %}">Roster</a> |
-    <a href="{% url 'leave_request_create' %}">Apply Leave</a> |
-    <a href="{% url 'my_leave_requests' %}">My Leave</a> |
-    {% if user.is_superuser or user.employeeprofile.role == "admin" or user.employeeprofile.role == "manager" %}
-        <a href="{% url 'employee_list' %}">Employees</a> |
-        <a href="{% url 'shiftslot_list' %}">Shift Slots</a> |
-        <a href="{% url 'attendance_list' %}">All Attendance</a> |
-        <a href="{% url 'leave_approval_list' %}">Leave Approvals</a> |
-    {% endif %}
-    {% if user.is_authenticated %}
-        Logged in as {{ user.username }} |
-            <form method="post" action="{% url 'logout' %}" style="display:inline;">
-                {% csrf_token %}
-                <button type="submit">Logout</button>
-            </form>
-    {% else %}
-        <a href="{% url 'login' %}">Login</a>
-    {% endif %}
-</nav>
-<hr>
-{% if messages %}
-    <ul>
-        {% for message in messages %}
-            <li>{{ message }}</li>
-        {% endfor %}
-    </ul>
-{% endif %}
-{% block content %}{% endblock %}
+    <!-- Site Navigation Header -->
+    <header class="site-header">
+        <div class="nav-container">
+            <a href="{% url 'dashboard' %}" class="brand-wrapper">
+                <img src="{% static 'images/logo.svg' %}" alt="Cafe HRMS Logo" class="brand-logo">
+            </a>
+
+            {% if user.is_authenticated %}
+            <ul class="nav-menu">
+                <li><a href="{% url 'dashboard' %}" class="nav-link">📊 Dashboard</a></li>
+                <li><a href="{% url 'roster' %}" class="nav-link">📅 Roster</a></li>
+                <li><a href="{% url 'my_attendance' %}" class="nav-link">⏱️ My Attendance</a></li>
+                <li><a href="{% url 'my_leave_requests' %}" class="nav-link">🌴 My Leave</a></li>
+                
+                {% if user.is_superuser or user.employeeprofile.role == "admin" or user.employeeprofile.role == "manager" %}
+                    <li><a href="{% url 'employee_list' %}" class="nav-link">👥 Employees</a></li>
+                    <li><a href="{% url 'shiftslot_list' %}" class="nav-link">⏳ Shift Slots</a></li>
+                    <li><a href="{% url 'attendance_list' %}" class="nav-link">📋 All Attendance</a></li>
+                    <li><a href="{% url 'leave_approval_list' %}" class="nav-link">✍️ Leave Approvals</a></li>
+                    <li><a href="{% url 'payroll_summary' %}" class="nav-link">💰 Payroll Report</a></li>
+                {% endif %}
+            </ul>
+
+            <div class="nav-user-panel">
+                <!-- Live Digital Clock Display -->
+                <div class="quick-attendance-widget" title="Current Cafe Local Time">
+                    <span style="font-size: 13px;">🕒</span>
+                    <span id="live-clock-display" class="live-clock">--:--:--</span>
+                </div>
+
+                <!-- User Profile & Role -->
+                <div class="user-badge">
+                    <div class="user-avatar">{{ user.username|slice:":1" }}</div>
+                    <div class="user-info">
+                        <span class="user-name">{{ user.get_full_name|default:user.username }}</span>
+                        <span class="user-role-tag">
+                            {% if user.is_superuser %}Admin / Owner
+                            {% elif user.employeeprofile.role == 'manager' %}Store Manager
+                            {% else %}Barista / Staff{% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Logout Action -->
+                <form method="post" action="{% url 'logout' %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-secondary btn-sm" title="Sign out of system">Logout</button>
+                </form>
+            </div>
+            {% else %}
+            <div class="nav-user-panel">
+                <a href="{% url 'login' %}" class="btn btn-primary btn-sm">Staff Login</a>
+            </div>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-wrapper">
+        <!-- Toast / System Messages -->
+        {% if messages %}
+            <div class="alert-container">
+                {% for message in messages %}
+                    <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
+                        <span>{{ message }}</span>
+                        <button type="button" class="alert-close">&times;</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Global Confirmation Modal -->
+    <div id="confirmation-modal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 id="confirm-modal-title" class="modal-title">Confirm Action</h3>
+            <p id="confirm-modal-text" class="modal-text">Are you sure you want to proceed?</p>
+            <div class="modal-actions">
+                <button type="button" id="confirm-modal-cancel" class="btn btn-secondary btn-sm">Cancel</button>
+                <form id="confirm-modal-form" method="post" action="" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-sm">Confirm</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Site Footer -->
+    <footer class="site-footer">
+        <div class="footer-container">
+            <div>
+                <strong>Cafe HRMS</strong> &bull; Human Resource Management &amp; Payroll System
+            </div>
+            <div>
+                UniKL MIIT &bull; Emerging Trend in Software Engineering (ISB 46203)
+            </div>
+        </div>
+    </footer>
+
+    <!-- Interactive JavaScript -->
+    <script src="{% static 'js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

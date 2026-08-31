@@ -1,10 +1,26 @@
 {% extends "base.html" %}
+{% block title %}{% if shift %}Edit Shift{% else %}Assign Shift{% endif %} - Cafe HRMS{% endblock %}
+
 {% block content %}
-<h2>Add Shift</h2>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Save</button>
-</form>
-<a href="{% url 'roster' %}">Back</a>
+<div class="page-header">
+    <div class="page-title-group">
+        <h1>{% if shift %}Edit Scheduled Shift{% else %}Assign Shift to Employee{% endif %}</h1>
+        <p class="page-subtitle">Select the barista, shift slot timing and assign the roster date.</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'roster' %}" class="btn btn-secondary">&larr; Back to Roster</a>
+    </div>
+</div>
+
+<div class="form-card">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        <div class="form-actions">
+            <a href="{% url 'roster' %}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Save Shift</button>
+        </div>
+    </form>
+</div>
 {% endblock %}
